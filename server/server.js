@@ -1,41 +1,49 @@
 const express = require('express');
 const multer = require('multer');
+const cors = require('cors');
 const path = require('path');
 const app = express();
-const cors = require('cors');
 
-// Enable CORS
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// Set storage engine for uploaded files
+// Storage configuration for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads');  // Save files to "uploads" folder
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));  // Use timestamp as file name
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 
-// Initialize multer with storage configuration
+// Multer file filter to accept only PDFs
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // Limit file size to 10MB
-}).single('file');
-
-// Route to handle file upload
-app.post('/upload', upload, (req, res) => {
-  if (req.file) {
-    res.status(200).send({
-      message: 'File uploaded successfully',
-      file: req.file
-    });
-  } else {
-    res.status(400).send('No file uploaded');
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      return cb(new Error('Only PDF files are allowed'), false);
+    }
+    cb(null, true);
   }
 });
 
-// Start the server
-app.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+// Upload route
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  // If PDF is uploaded successfully
+  res.status(200).json({
+    message: 'File uploaded successfully',
+    file: req.file
+  });
+});
+
+// Server setup
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
