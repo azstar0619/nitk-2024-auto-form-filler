@@ -32,3 +32,5 @@ app.post("/upload", upload.single("file"), (req, res) => {
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");
 });
+
+const url = "mongodb+srv://anshsalunke5:9Kpwl59LL9jL0Pqo@cluster0.bpfm4.mongodb.net/";
