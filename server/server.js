@@ -1,36 +1,23 @@
-const express = require("express");
-const multer = require("multer");
-const tesseract = require("tesseract.js");
-const path = require("path");
-const fs = require("fs");
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const uploadRoute = require('./routes/upload'); // Import the routes
 
 const app = express();
+const port = 5000;
 
-// Set up Multer for file uploads
-const upload = multer({ dest: "uploads/" });
+// Middleware to parse JSON data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(path.join(__dirname, "public")));
+// Set static file path for uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Endpoint for uploading files
-app.post("/upload", upload.single("file"), (req, res) => {
-  const filePath = req.file.path;
-
-  // Perform OCR using Tesseract.js
-  tesseract.recognize(filePath, "eng")
-    .then(({ data: { text } }) => {
-      res.json({ extractedText: text });
-
-      // Clean up by removing the file
-      fs.unlinkSync(filePath);
-    })
-    .catch((error) => {
-      res.status(500).send("Error processing document");
-    });
-});
+// Use the upload routes
+app.use('/api', uploadRoute);
 
 // Start the server
-app.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
-
-const url = "mongodb+srv://anshsalunke5:9Kpwl59LL9jL0Pqo@cluster0.bpfm4.mongodb.net/";
