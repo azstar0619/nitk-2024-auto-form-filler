@@ -1,23 +1,41 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const uploadRoute = require('./routes/upload'); // Import the routes
-
 const app = express();
-const port = 5000;
+const cors = require('cors');
 
-// Middleware to parse JSON data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Enable CORS
+app.use(cors());
 
-// Set static file path for uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Set storage engine for uploaded files
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './uploads');  // Save files to "uploads" folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));  // Use timestamp as file name
+  }
+});
 
-// Use the upload routes
-app.use('/api', uploadRoute);
+// Initialize multer with storage configuration
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // Limit file size to 10MB
+}).single('file');
+
+// Route to handle file upload
+app.post('/upload', upload, (req, res) => {
+  if (req.file) {
+    res.status(200).send({
+      message: 'File uploaded successfully',
+      file: req.file
+    });
+  } else {
+    res.status(400).send('No file uploaded');
+  }
+});
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
 });
